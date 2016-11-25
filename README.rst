@@ -9,7 +9,7 @@ Install dependencies. On Ubuntu::
 
 Install the package::
 
-   sudo pip install -e git+https://github.com/SAKErobotics/libezgripper.git#egg=libezgripper
+   sudo pip install git+https://github.com/SAKErobotics/libezgripper.git#egg=libezgripper
  
 2. Usage
 --------
