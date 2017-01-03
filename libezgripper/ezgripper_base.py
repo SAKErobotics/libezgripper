@@ -113,6 +113,11 @@ class Gripper:
         for servo in self.servos:
             servo.write_word(30, position)
         wait_for_stop(self.servos[0])
+        
+    def _close_with_torque(self):
+        for servo in self.servos:
+            set_torque_mode(servo, True)
+        wait_for_stop(self.servos[0])
 
     def goto_position(self, position, closing_torque):
         # Using the 0-100% range allows the user to define the definition of where the gap is measured.
@@ -123,7 +128,10 @@ class Gripper:
         print "goto_position(%d, %d): servo position %d"%(position, closing_torque, servo_position)
         self.set_max_effort(closing_torque)  # essentially sets velocity of movement, but also sets max_effort for initial half second of grasp.
 
-        self._goto_position(servo_position)
+        if position == 0:
+            self._close_with_torque()
+        else:
+            self._goto_position(servo_position)
         
         # Sets torque to keep gripper in position, but does not apply torque if there is no load.
         # This does not provide continuous grasping torque.
