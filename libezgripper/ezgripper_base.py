@@ -58,8 +58,8 @@ def wait_for_stop(servo):
 class Gripper:
     
     GRIP_MAX = 2500 # maximum open position for grippers
-    TORQUE_MAX = 350 # maximum torque - MX-64=500, MX-106=350
-    TORQUE_HOLD = 10 # This is in percentage units. In absolute units: holding torque - MX-64=100, MX-106=80
+    TORQUE_MAX = 800 # maximum torque - MX-64=500, MX-106=350
+    TORQUE_HOLD = 13 # This is percentage of TORQUE_MAX. In absolute units: holding torque - MX-64=100, MX-106=80
    
     def __init__(self, connection, name, servo_ids):
         self.name = name
@@ -98,8 +98,7 @@ class Gripper:
         # range 0-100% (0-100) - this range is in 0-100 whole numbers so that it can be used where Newton force is expected
         # max dynamixel torque is 0-1023(unitless)
 
-        torque_mode_max_effort = moving_torque = self.scale(max_effort, 1023)
-        if torque_mode_max_effort > self.TORQUE_MAX: torque_mode_max_effort = self.TORQUE_MAX # torque limited for torque mode because it is generally not needed and reduces system stress
+        torque_mode_max_effort = moving_torque = self.scale(max_effort, self.TORQUE_MAX)
 
         print "set_max_effort(%d): moving torque: %d, goal torque: %d"%(
                     max_effort, moving_torque, torque_mode_max_effort)
