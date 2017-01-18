@@ -7,6 +7,7 @@ from PyQt4 import QtGui, QtCore
 
 connection = create_connection(dev_name='/dev/ttyUSB0', baudrate= 57600)
 gripper = Gripper(connection, 'gripper1', [1])
+#gripper = Gripper(connection, 'gripper1', [1,2,3])
 
 class GripperGUI(QtGui.QMainWindow):
 
@@ -23,7 +24,7 @@ class GripperGUI(QtGui.QMainWindow):
       calibrateButton.show()
 
       releaseButton=QtGui.QPushButton("Release",self)
-      releaseButton.resize(600,30)
+      releaseButton.resize(600,40)
       releaseButton.clicked.connect(gripper.release)
       releaseButton.move(50,50)
 
@@ -45,61 +46,61 @@ class GripperGUI(QtGui.QMainWindow):
       gotoButton=QtGui.QPushButton("0% Open", self)
       gotoButton.resize(100,50)
       gotoButton.clicked.connect(self.submit_goto1) 
-      gotoButton.move(50,300)
+      gotoButton.move(50,210)
 
       gotoButton=QtGui.QPushButton("10% Open", self)
       gotoButton.resize(100,50)
       gotoButton.clicked.connect(self.submit_goto2) 
-      gotoButton.move(150,300)
+      gotoButton.move(150,210)
 
       gotoButton=QtGui.QPushButton("20% Open", self)
       gotoButton.resize(100,50)
       gotoButton.clicked.connect(self.submit_goto3) 
-      gotoButton.move(250,300)
+      gotoButton.move(250,210)
 
       gotoButton=QtGui.QPushButton("30% Open", self)
       gotoButton.resize(100,50)
       gotoButton.clicked.connect(self.submit_goto4) 
-      gotoButton.move(350,300)
+      gotoButton.move(350,210)
 
       gotoButton=QtGui.QPushButton("40% Open", self)
       gotoButton.resize(100,50)
       gotoButton.clicked.connect(self.submit_goto5) 
-      gotoButton.move(450,300)
+      gotoButton.move(450,210)
 
       gotoButton=QtGui.QPushButton("50% Open", self)
       gotoButton.resize(100,50)
       gotoButton.clicked.connect(self.submit_goto6) 
-      gotoButton.move(550,300)
+      gotoButton.move(550,210)
 
       gotoButton=QtGui.QPushButton("60% Open", self)
       gotoButton.resize(100,50)
       gotoButton.clicked.connect(self.submit_goto7) 
-      gotoButton.move(150,450)
+      gotoButton.move(150,260)
 
       gotoButton=QtGui.QPushButton("70% Open", self)
       gotoButton.resize(100,50)
       gotoButton.clicked.connect(self.submit_goto8) 
-      gotoButton.move(250,450)
+      gotoButton.move(250,260)
 
       gotoButton=QtGui.QPushButton("80% Open", self)
       gotoButton.resize(100,50)
       gotoButton.clicked.connect(self.submit_goto9) 
-      gotoButton.move(350,450)
+      gotoButton.move(350,260)
 
       gotoButton=QtGui.QPushButton("90% Open", self)
       gotoButton.resize(100,50)
       gotoButton.clicked.connect(self.submit_goto10) 
-      gotoButton.move(450,450)
+      gotoButton.move(450,260)
 
       gotoButton=QtGui.QPushButton("100% Open", self)
       gotoButton.resize(100,50)
       gotoButton.clicked.connect(self.submit_goto11) 
-      gotoButton.move(550,450)
+      gotoButton.move(550,260)
  
       self.statusBar()
 
-      self.setGeometry(300, 200, 800, 850)
+      self.setGeometry(300, 200, 700, 350)
       self.setWindowTitle("EZGripper GUI")
       self.show()
 
