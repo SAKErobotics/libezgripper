@@ -57,3 +57,18 @@ Here are a few examples::
    # Close the gripper with half the force
    gripper.goto_position(0, 50)
    
+3. Example Program - ezgripperGUI.py
+
+In the directory of ezgripperGUI.py, run the following command.
+
+   ./ezgripperGUI.py
+   
+This should open a push-button GUI using the two base commands - calibrate and goto_position.
+   
+Make sure ezgripperGUI.py is executable. 
+
+This program can operate an array of EZGripper robotic grippers.  Just modify the line near the top of the file.
+gripper = Gripper(connection, 'gripper1', [1,2,3])
+
+gripper = Gripper(connection, 'gripper1', [1])
+
