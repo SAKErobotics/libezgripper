@@ -57,7 +57,8 @@ Here are a few examples::
    # Close the gripper with half the force
    gripper.goto_position(0, 50)
    
-3. Example Program - ezgripperGUI.py
+3. QuickStart Demo - ezgripperGUI.py
+------------------------------------
 
 In the directory of ezgripperGUI.py, run the following command.
 
