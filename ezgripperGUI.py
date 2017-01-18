@@ -19,6 +19,7 @@ class GripperGUI(QtGui.QMainWindow):
 
       calibrateButton=QtGui.QPushButton("Calibrate",self)
       calibrateButton.resize(100,30)
+#      calibrateButton.setStyleSheet("background-color:rgb(153, 153, 153)")
       calibrateButton.clicked.connect(gripper.calibrate)
       calibrateButton.move(50,10)
       calibrateButton.show()
@@ -95,6 +96,9 @@ class GripperGUI(QtGui.QMainWindow):
 
       gotoButton=QtGui.QPushButton("100% Open", self)
       gotoButton.resize(100,50)
+#      gotoButton.setStyleSheet("background-color:yellow")
+#      gotoButton.setStyleSheet("background-color: rgb(51, 102, 153)")
+#      gotoButton.setStyleSheet("border: 1px solid rgb(255, 255, 255)")
       gotoButton.clicked.connect(self.submit_goto11) 
       gotoButton.move(550,260)
  
