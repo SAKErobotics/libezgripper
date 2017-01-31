@@ -8,6 +8,7 @@ from PyQt4 import QtGui, QtCore
 connection = create_connection(dev_name='/dev/ttyUSB0', baudrate= 57600)
 gripper = Gripper(connection, 'gripper1', [1])
 #gripper = Gripper(connection, 'gripper1', [1,2,3])
+#gripper = Gripper(connection, 'gripper1', [2,3])
 
 class GripperGUI(QtGui.QMainWindow):
 
