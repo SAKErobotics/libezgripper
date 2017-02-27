@@ -10,6 +10,16 @@ Install dependencies. On Ubuntu::
 Install the package::
 
    sudo pip install git+https://github.com/SAKErobotics/libezgripper.git#egg=libezgripper
+   
+Install PyQt4 for the GUI::
+
+   sudo apt-get install python-qt4
+   
+Install the ezgripperGUI.py to a working directory::
+
+   sudo git clone https://github.com/SAKErobotics/libezgripper
+   cd libezgripper
+   sudo chmod +x ezgripperGUI.py
  
 2. Usage
 --------
@@ -59,6 +69,9 @@ Here are a few examples::
    
 3. QuickStart Demo - ezgripperGUI.py
 ------------------------------------
+
+ezgripperGUI.py uses PyQt4.  Install PyQt4.
+   
 
 In the directory of ezgripperGUI.py, run the following command.
 
