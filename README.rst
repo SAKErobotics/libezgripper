@@ -15,11 +15,13 @@ Install PyQt4 for the GUI::
 
    sudo apt-get install python-qt4
    
-Install the ezgripperGUI.py to a working directory::
+Install the ezgripperGUI.py to your desired working directory::
 
-   sudo git clone https://github.com/SAKErobotics/libezgripper
-   cd libezgripper
-   sudo chmod +x ezgripperGUI.py
+   $ wget https://raw.githubusercontent.com/SAKErobotics/libezgripper/master/ezgripperGUI.py
+   $ sudo chmod +x ezgripperGUI.py
+   
+to run ezgripperGUI.py from directory it is installed.
+   $ ./ezgripperGUI.py
  
 2. Usage
 --------
@@ -68,10 +70,7 @@ Here are a few examples::
    gripper.goto_position(0, 50)
    
 3. QuickStart Demo - ezgripperGUI.py
-------------------------------------
-
-ezgripperGUI.py uses PyQt4.  Install PyQt4.
-   
+------------------------------------   
 
 In the directory of ezgripperGUI.py, run the following command.
 
