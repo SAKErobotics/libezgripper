@@ -64,6 +64,8 @@ class Gripper:
     def __init__(self, connection, name, servo_ids):
         self.name = name
         self.servos = [Robotis_Servo( connection, servo_id ) for servo_id in servo_ids]
+        for servo in self.servos:
+            servo.ensure_byte_set(22, 1) # Make sure 'Resolution divider' is set to 1
     
     def scale(self, n, to_max):
         # Scale from 0..100 to 0..to_max
@@ -141,6 +143,9 @@ class Gripper:
     def release(self):
         for servo in self.servos:
             set_torque_mode(servo, False)
+            
+    def open(self):
+        self.goto_position(100, 100)
 
 if __name__ == '__main__':
     # Sample code
