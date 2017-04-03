@@ -74,7 +74,7 @@ Here are a few examples::
 Referencing the USB port by the device name /dev/ttyUSB0 is sometimes problematic.
 If you have several USB devices with similar names it is not always clear which is
 the one you want. And even when you find it they can switch names later. To make 
-finding the port easier you can use 'hwgrep://' URLs:
+finding the port easier you can use 'hwgrep://' URLs::
 
    # Find the port by vendor:device id
    connection = create_connection(dev_name='hwgrep://0403:6001', baudrate=57600)
@@ -82,11 +82,11 @@ finding the port easier you can use 'hwgrep://' URLs:
    # Find the port by serial number
    connection = create_connection(dev_name='hwgrep://A4012B2G', baudrate=57600)
 
-To see the properties of your serial ports the library can find try this:
+To see the properties of your serial ports the library can find try this::
 
    python -c "import serial.tools.list_ports;print serial.tools.list_ports.comports()"
 
-For network connected serial devices you can use the 'socket://' URL:
+For network connected serial devices you can use the 'socket://' URL::
 
    connection = create_connection('socket://127.0.0.1:4000')
 
@@ -94,7 +94,7 @@ For network connected serial devices you can use the 'socket://' URL:
 3. QuickStart Demo - ezgripperGUI.py
 ------------------------------------   
 
-In the directory of ezgripperGUI.py, run the following command.
+In the directory of ezgripperGUI.py, run the following command::
 
    ./ezgripperGUI.py
    
@@ -102,7 +102,7 @@ This should open a push-button GUI using the two base commands - calibrate and g
    
 Make sure ezgripperGUI.py is executable. 
 
-This program can operate an array of EZGripper robotic grippers.  Just modify the line near the top of the file.
+This program can operate an array of EZGripper robotic grippers.  Just modify the line near the top of the file::
 
     gripper = Gripper(connection, 'gripper1', [1,2,3])
 
