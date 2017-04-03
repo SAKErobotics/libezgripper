@@ -56,11 +56,7 @@ class CommunicationError(RuntimeError):
         RuntimeError.__init__(self, text)
 
 def create_connection(dev_name = '/dev/ttyUSB0', baudrate = 57600):
-    parts = dev_name.split(':')
-    if len(parts) == 2:
-        return TCP_Device(parts[0], int(parts[1]))
-    else:
-        return USB2Dynamixel_Device(dev_name, baudrate)
+    return USB2Dynamixel_Device(dev_name, baudrate)
 
 
 class TCP_Device():
@@ -146,7 +142,7 @@ class USB2Dynamixel_Device():
 
     def _open_serial(self, baudrate):
         try:
-            self.servo_dev = serial.Serial(self.dev_name, baudrate, timeout=0.2, writeTimeout=0.2)
+            self.servo_dev = serial.serial_for_url(url=self.dev_name, baudrate=baudrate, timeout=0.2, writeTimeout=0.2)
             # Closing the device first seems to prevent "Access Denied" errors on WinXP
             # (Conversations with Brian Wu @ MIT on 6/23/2010)
             self.servo_dev.close()  

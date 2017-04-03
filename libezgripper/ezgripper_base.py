@@ -150,6 +150,8 @@ class Gripper:
 if __name__ == '__main__':
     # Sample code
     connection = create_connection(dev_name='/dev/ttyUSB0', baudrate=57600)
+    #connection = create_connection(dev_name='hwgrep://0403:6001', baudrate=57600)
+    #connection = create_connection(dev_name='socket://127.0.0.1:4000', baudrate=57600)
     gripper = Gripper(connection, 'gripper1', [1])
     
     gripper.calibrate()
