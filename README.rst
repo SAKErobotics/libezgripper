@@ -69,6 +69,28 @@ Here are a few examples::
    # Close the gripper with half the force
    gripper.goto_position(0, 50)
    
+2.1 Serial Port URLs
+--------------------
+Referencing the USB port by the device name /dev/ttyUSB0 is sometimes problematic.
+If you have several USB devices with similar names it is not always clear which is
+the one you want. And even when you find it they can switch names later. To make 
+finding the port easier you can use 'hwgrep://' URLs:
+
+   # Find the port by vendor:device id
+   connection = create_connection(dev_name='hwgrep://0403:6001', baudrate=57600)
+   
+   # Find the port by serial number
+   connection = create_connection(dev_name='hwgrep://A4012B2G', baudrate=57600)
+
+To see the properties of your serial ports the library can find try this:
+
+   python -c "import serial.tools.list_ports;print serial.tools.list_ports.comports()"
+
+For network connected serial devices you can use the 'socket://' URL:
+
+   connection = create_connection('socket://127.0.0.1:4000')
+
+
 3. QuickStart Demo - ezgripperGUI.py
 ------------------------------------   
 
