@@ -88,7 +88,7 @@ To see the properties of your serial ports the library can find try this::
 
 For network connected serial devices you can use the 'socket://' URL::
 
-   connection = create_connection('socket://127.0.0.1:4000')
+   connection = create_connection('socket://192.168.1.200:4000')
 
 
 3. QuickStart Demo - ezgripperGUI.py
