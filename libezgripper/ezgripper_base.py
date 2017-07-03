@@ -74,6 +74,13 @@ class Gripper:
         if result < 0: result = 0
         return result
     
+    def down_scale (self, n, to_max):
+        # Scale from 0..to_max to 0..100
+        result = int(round(n * 100.0 / to_max))
+        if result > 100: result = 100
+        if result < 0: result = 0
+        return result
+        
     def calibrate(self):
         print "calibrating: " + self.name
         
@@ -120,6 +127,11 @@ class Gripper:
             set_torque_mode(servo, True)
         wait_for_stop(self.servos[0])
 
+    def get_position(self):
+        servo_position = self.servos[0].read_word(36)
+        if servo_position >= 32768: servo_position -= 65536
+        return self.down_scale(servo_position, self.GRIP_MAX)
+
     def goto_position(self, position, closing_torque):
         # Using the 0-100% range allows the user to define the definition of where the gap is measured.
         # position: 0..100, 0 - close, 100 - open
@@ -161,5 +173,8 @@ if __name__ == '__main__':
     gripper.goto_position(0, 50) # close
     time.sleep(2.0)
     gripper.goto_position(100, 50) # open
+    time.sleep(2.0)
+    gripper.goto_position(70, 100) # position 70
+    print "get_position:", gripper.get_position()
     print "DONE"
 
