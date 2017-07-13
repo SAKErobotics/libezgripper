@@ -165,7 +165,8 @@ if __name__ == '__main__':
     #connection = create_connection(dev_name='hwgrep://0403:6001', baudrate=57600)
     #connection = create_connection(dev_name='socket://127.0.0.1:4000', baudrate=57600)
     gripper = Gripper(connection, 'gripper1', [1])
-    
+    #gripper = Gripper(connection, 'gripper1', [1,2])
+
     gripper.calibrate()
     gripper.goto_position(100, 100) # open
     
