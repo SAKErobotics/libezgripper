@@ -34,6 +34,7 @@
 ## Updated by: Girts Linde
 
 import serial
+import serial.tools.list_ports
 import time
 import thread
 import sys, optparse
@@ -165,13 +166,14 @@ class USB2Dynamixel_Device():
 class Robotis_Servo():
     ''' Class to use a robotis RX-28 or RX-64 servo.
     '''
-    def __init__(self, USB2Dynamixel, servo_id ):
+    def __init__(self, USB2Dynamixel, servo_id, retry_count=3 ):
         ''' USB2Dynamixel - USB2Dynamixel_Device object to handle serial port.
                             Handles threadsafe operation for multiple servos
             servo_id - servo ids connected to USB2Dynamixel 1,2,3,4 ... (1 to 253)
                        [0 is broadcast if memory serves]
         '''
 
+        self.retry_count = retry_count
         # Error Checking
         if USB2Dynamixel == None:
             raise RuntimeError('lib_robotis: Robotis Servo requires USB2Dynamixel!\n')
@@ -183,6 +185,8 @@ class Robotis_Servo():
         try:
             self.read_address(3)
         except Exception as e:
+            if self.retry_count == 0:
+                raise
             print "Exception:", e.message
             print "Get ID failed once, retrying"
             self.dyn.flush_input()
@@ -369,7 +373,7 @@ class Robotis_Servo():
                     break
                 except (CommunicationError, serial.SerialException, socket.timeout) as e:
                     failures += 1
-                    if failures > 3:
+                    if failures > self.retry_count:
                         raise
                     warning("send_instruction retry %d, error: %s"%(failures, e.message))
         except:
@@ -447,21 +451,38 @@ class Robotis_Servo():
             else:
                 print "Servo %d: recovery failed, status code %d"%(self.servo_id, e)
 
-def find_servos(dyn):
+def find_servos(dyn, max_id=252, print_progress=False):
     ''' Finds all servo IDs on the USB2Dynamixel '''
-    print 'Scanning for Servos.'
     servos = []
+    prev_timeout = dyn.servo_dev.getTimeout()
     dyn.servo_dev.setTimeout( 0.03 ) # To make the scan faster
-    for i in xrange(254):
+    for i in xrange(max_id+1): # 0..max_id
         try:
-            _ = Robotis_Servo( dyn, i )
-            print '\n FOUND A SERVO @ ID %d\n' % i
+            _ = Robotis_Servo( dyn, i, retry_count=0 )
+            if print_progress:
+                print ' FOUND A SERVO @ ID %d' % i
             servos.append( i )
         except:
             pass
-    dyn.servo_dev.setTimeout( 1.0 ) # Restore to original
+    dyn.servo_dev.setTimeout( prev_timeout )
     return servos
 
+def find_servos_on_all_ports(max_id=252, baudrate=57600, print_progress=False):
+    ports = serial.tools.list_ports.comports()
+    result = []
+    for port in ports:
+        device_name = port[0]
+        if 'ttyUSB' in device_name or 'ttyACM' in device_name or 'COM' in device_name:
+            if print_progress:
+                print "device:", device_name
+            try:
+                connection = create_connection(device_name, 57600)
+                servo_ids = find_servos(connection, max_id=max_id, print_progress=print_progress)
+                if servo_ids:
+                    result.append( (device_name, servo_ids) )
+            except:
+                pass
+    return result
 
 def recover_servo(dyn):
     ''' Recovers a bricked servo by booting into diagnostic bootloader and resetting '''
@@ -524,7 +545,8 @@ if __name__ == '__main__':
     dyn = USB2Dynamixel_Device(opt.dev_name, opt.baud)
 
     if opt.scan:
-        find_servos( dyn )
+        print 'Scanning for Servos...'
+        find_servos( dyn, print_progress=True )
 
     if opt.recover:
         recover_servo( dyn )
