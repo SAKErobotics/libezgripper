@@ -159,6 +159,12 @@ class Gripper:
     def open(self):
         self.goto_position(100, 100)
 
+    def get_temperatures(self):
+        temperatures = []
+        for servo in self.servos:
+            temperatures.append(servo.read_temperature())
+        return temperatures
+
 if __name__ == '__main__':
     # Sample code
     connection = create_connection(dev_name='/dev/ttyUSB0', baudrate=57600)
@@ -166,6 +172,8 @@ if __name__ == '__main__':
     #connection = create_connection(dev_name='socket://127.0.0.1:4000', baudrate=57600)
     gripper = Gripper(connection, 'gripper1', [1])
     #gripper = Gripper(connection, 'gripper1', [1,2])
+
+    print "temperatures:", gripper.get_temperatures()
 
     gripper.calibrate()
     gripper.goto_position(100, 100) # open
@@ -178,4 +186,3 @@ if __name__ == '__main__':
     gripper.goto_position(70, 100) # position 70
     print "get_position:", gripper.get_position()
     print "DONE"
-
