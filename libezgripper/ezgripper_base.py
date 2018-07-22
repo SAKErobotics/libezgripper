@@ -127,10 +127,18 @@ class Gripper:
             set_torque_mode(servo, True)
         wait_for_stop(self.servos[0])
 
-    def get_position(self):
-        servo_position = self.servos[0].read_word(36)
+    def get_position(self, servo=None):
+        if servo is None:
+            servo = self.servos[0]
+        servo_position = servo.read_word(36)
         if servo_position >= 32768: servo_position -= 65536
         return self.down_scale(servo_position, self.GRIP_MAX)
+
+    def get_positions(self):
+        positions = []
+        for servo in self.servos:
+            positions.append(self.get_position(servo))
+        return positions
 
     def goto_position(self, position, closing_torque):
         # Using the 0-100% range allows the user to define the definition of where the gap is measured.
@@ -177,12 +185,13 @@ if __name__ == '__main__':
 
     gripper.calibrate()
     gripper.goto_position(100, 100) # open
-    
     time.sleep(2.0)
+    print "positions:", gripper.get_positions()
     gripper.goto_position(0, 50) # close
     time.sleep(2.0)
+    print "positions:", gripper.get_positions()
     gripper.goto_position(100, 50) # open
     time.sleep(2.0)
     gripper.goto_position(70, 100) # position 70
-    print "get_position:", gripper.get_position()
+    print "positions:", gripper.get_positions()
     print "DONE"
