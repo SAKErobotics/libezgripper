@@ -49,7 +49,7 @@ def wait_for_stop(servo):
         if current_position == last_position:
             break
         last_position = current_position
-        time.sleep(0.1)                         
+        time.sleep(0.1)
         
         if time.time() - wait_start > 5:
             break
@@ -66,6 +66,7 @@ class Gripper:
         self.servos = [Robotis_Servo( connection, servo_id ) for servo_id in servo_ids]
         for servo in self.servos:
             servo.ensure_byte_set(22, 1) # Make sure 'Resolution divider' is set to 1
+        self.zero_positions = [0] * len(self.servos)
     
     def scale(self, n, to_max):
         # Scale from 0..100 to 0..to_max
@@ -93,13 +94,12 @@ class Gripper:
         
         time.sleep(4.0)                               # 6) give it time to stop
         
-        for servo in self.servos:
+        for i in range(len(self.servos)):
+            servo = self.servos[i]
             servo.write_word(71, 1024 + 10)            # 7) Set "Goal Torque" Direction to CW and Value 10 - reduce load on servo
             servo.write_word(20, 0)                    # 8) set "Multi turn offset" to 0   
-            position = servo.read_word(36)             # 9) read current position of servo
-            servo.write_word(20, -position)
-            servo.write_address(70, [0])               # Stopping torque here improves makes writing "multi-word offset" consistent
-            
+            self.zero_positions[i] = servo.read_word_signed(36) # 9) read current position of servo
+        
         print "calibration done"
     
     def set_max_effort(self, max_effort):
@@ -118,8 +118,8 @@ class Gripper:
     def _goto_position(self, position):
         for servo in self.servos:
             set_torque_mode(servo, False)
-        for servo in self.servos:
-            servo.write_word(30, position)
+        for i in range(len(self.servos)):
+            self.servos[i].write_word(30, self.zero_positions[i] + position)
         wait_for_stop(self.servos[0])
         
     def _close_with_torque(self):
@@ -127,17 +127,14 @@ class Gripper:
             set_torque_mode(servo, True)
         wait_for_stop(self.servos[0])
 
-    def get_position(self, servo=None):
-        if servo is None:
-            servo = self.servos[0]
-        servo_position = servo.read_word(36)
-        if servo_position >= 32768: servo_position -= 65536
+    def get_position(self, servo_num=0):
+        servo_position = self.servos[servo_num].read_word_signed(36) - self.zero_positions[servo_num]
         return self.down_scale(servo_position, self.GRIP_MAX)
 
     def get_positions(self):
         positions = []
-        for servo in self.servos:
-            positions.append(self.get_position(servo))
+        for i in range(len(self.servos)):
+            positions.append(self.get_position(i))
         return positions
 
     def goto_position(self, position, closing_torque):
@@ -194,4 +191,5 @@ if __name__ == '__main__':
     time.sleep(2.0)
     gripper.goto_position(70, 100) # position 70
     print "positions:", gripper.get_positions()
+    print "position:", gripper.get_position()
     print "DONE"

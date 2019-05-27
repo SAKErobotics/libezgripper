@@ -262,6 +262,11 @@ class Robotis_Servo():
         data = self.read_address( addr, 2 )
         value = data[0] + data[1] * 256
         return value
+    
+    def read_word_signed(self, addr):
+        value = self.read_word(addr)
+        if value >= 32768: value -= 65536
+        return value
 
     def enable_torque(self):
         return self.write_address(0x18, [1])
