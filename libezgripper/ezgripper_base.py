@@ -83,7 +83,7 @@ class Gripper:
         return result
         
     def calibrate(self):
-        print "calibrating: " + self.name
+        print("calibrating: " + self.name)
         
         for servo in self.servos:
             servo.write_address(6, [255,15,255,15] )   # 1) "Multi-Turn" - ON
@@ -100,7 +100,7 @@ class Gripper:
             servo.write_word(20, 0)                    # 8) set "Multi turn offset" to 0   
             self.zero_positions[i] = servo.read_word_signed(36) # 9) read current position of servo
         
-        print "calibration done"
+        print("calibration done")
     
     def set_max_effort(self, max_effort):
         # sets torque for moving to position (moving_torque) and for torque only mode (torque_mode_max_effort)
@@ -109,8 +109,8 @@ class Gripper:
 
         torque_mode_max_effort = moving_torque = self.scale(max_effort, self.TORQUE_MAX)
 
-        print "set_max_effort(%d): moving torque: %d, goal torque: %d"%(
-                    max_effort, moving_torque, torque_mode_max_effort)
+        print("set_max_effort(%d): moving torque: %d, goal torque: %d"%(
+                    max_effort, moving_torque, torque_mode_max_effort))
         for servo in self.servos:
             servo.write_word(34, moving_torque) # torque for moving to position,and due to Dynamixel architecture, this also limits max value for register 71 below
             servo.write_word(71, 1024+torque_mode_max_effort) # torque mode of closing gripper
@@ -143,7 +143,7 @@ class Gripper:
         # closing_torque: 0..100
         
         servo_position = self.scale(position, self.GRIP_MAX)
-        print "goto_position(%d, %d): servo position %d"%(position, closing_torque, servo_position)
+        print("goto_position(%d, %d): servo position %d"%(position, closing_torque, servo_position))
         self.set_max_effort(closing_torque)  # essentially sets velocity of movement, but also sets max_effort for initial half second of grasp.
 
         if position == 0:
@@ -155,7 +155,7 @@ class Gripper:
         # This does not provide continuous grasping torque.
         holding_torque = min(self.TORQUE_HOLD, closing_torque)
         self.set_max_effort(holding_torque)
-        print "goto_position done"
+        print("goto_position done")
 
     def release(self):
         for servo in self.servos:
@@ -178,18 +178,18 @@ if __name__ == '__main__':
     gripper = Gripper(connection, 'gripper1', [1])
     #gripper = Gripper(connection, 'gripper1', [1,2])
 
-    print "temperatures:", gripper.get_temperatures()
+    print("temperatures:", gripper.get_temperatures())
 
     gripper.calibrate()
     gripper.goto_position(100, 100) # open
     time.sleep(2.0)
-    print "positions:", gripper.get_positions()
+    print("positions:", gripper.get_positions())
     gripper.goto_position(0, 50) # close
     time.sleep(2.0)
-    print "positions:", gripper.get_positions()
+    print("positions:", gripper.get_positions())
     gripper.goto_position(100, 50) # open
     time.sleep(2.0)
     gripper.goto_position(70, 100) # position 70
-    print "positions:", gripper.get_positions()
-    print "position:", gripper.get_position()
-    print "DONE"
+    print("positions:", gripper.get_positions())
+    print("position:", gripper.get_position())
+    print("DONE")

@@ -33,18 +33,17 @@
 ## Authors: Travis Deyle, Advait Jain & Marc Killpack (Healthcare Robotics Lab, Georgia Tech.)
 ## Updated by: Girts Linde
 
+from __future__ import print_function
 import serial
 import serial.tools.list_ports
 import time
-import thread
+import threading
 import sys, optparse
 import math
-import string
 import socket 
-from select import select
 
 def warning(msg):
-    print >> sys.stderr, msg
+    print(msg, file=sys.stderr)
     
 class ErrorResponse(Exception):
     def __init__(self, value):
@@ -58,83 +57,31 @@ class CommunicationError(RuntimeError):
 
 def create_connection(dev_name = '/dev/ttyUSB0', baudrate = 57600):
     return USB2Dynamixel_Device(dev_name, baudrate)
-
-
-class TCP_Device():
-    def __init__(self, host, port):
-        self.dev_name = host + ':' + str(port)
-        self.mutex = thread.allocate_lock()
-        
-        self.acq_mutex()
-        try:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.settimeout(5.0)
-            self.sock.connect((host, port))
-            self.sock.settimeout(0.2)
-        except Exception as e:
-            warning("Error connecting to %s: %s"%(self.dev_name, e))
-            raise
-        self.rel_mutex()
-        
-    def acq_mutex(self):
-        self.mutex.acquire()
-
-    def rel_mutex(self):
-        self.mutex.release()
-
-    def send_serial(self, msg):
-        self.sock.sendall(msg)
-
-    def flush_input(self):
-        readable, _, _ = select([self.sock], [], [], 0)
-        if readable:
-            print "flush_input: doing actual recv"
-            self.sock.recv(4096, socket.MSG_DONTWAIT)
-
-    def read_serial(self, nBytes=1):
-        # It is up to the caller to acquire / release mutex
-        chunks = []
-        bytes_recd = 0
-        while bytes_recd < nBytes:
-            chunk = self.sock.recv(min(nBytes - bytes_recd, 2048))
-            if chunk == '':
-                raise RuntimeError("socket connection broken")
-            chunks.append(chunk)
-            bytes_recd = bytes_recd + len(chunk)
-        return ''.join(chunks)        
-    
     
 class USB2Dynamixel_Device():
     ''' Class that manages serial port contention between servos on same bus
     '''
     def __init__( self, dev_name = '/dev/ttyUSB0', baudrate = 57600 ):
         try:
-            self.dev_name = string.atoi( dev_name ) # stores the serial port as 0-based integer for Windows
+            self.dev_name = int( dev_name ) # stores the serial port as 0-based integer for Windows
         except:
             self.dev_name = dev_name # stores it as a /dev-mapped string for Linux / Mac
 
-        self.mutex = thread.allocate_lock()
+        self.lock = threading.Lock()
         self.servo_dev = None
 
-        self.acq_mutex()
-        self._open_serial( baudrate )
-        self.rel_mutex()
-
-    def acq_mutex(self):
-        self.mutex.acquire()
-
-    def rel_mutex(self):
-        self.mutex.release()
+        with self.lock:
+            self._open_serial( baudrate )
 
     def send_serial(self, msg):
-        # It is up to the caller to acquire / release mutex
+        # It is up to the caller to acquire lock
         self.servo_dev.write( msg )
 
     def flush_input(self):
         self.servo_dev.flushInput()
 
     def read_serial(self, nBytes=1):
-        # It is up to the caller to acquire / release mutex
+        # It is up to the caller to acquire lock
         rep = self.servo_dev.read( nBytes )
         if len(rep) < nBytes:
             raise CommunicationError('read_serial: not enough bytes received (expected %d, received %d)'%(nBytes, len(rep)))
@@ -154,7 +101,7 @@ class USB2Dynamixel_Device():
             self.servo_dev.flushOutput()
             self.servo_dev.flushInput()
 
-        except (serial.serialutil.SerialException), e:
+        except (serial.serialutil.SerialException) as e:
             raise RuntimeError("lib_robotis: Serial port not found!\n%s"%e)
         if(self.servo_dev == None):
             raise RuntimeError('lib_robotis: Serial port not found!\n')
@@ -187,8 +134,8 @@ class Robotis_Servo():
         except Exception as e:
             if self.retry_count == 0:
                 raise
-            print "Exception:", e.message
-            print "Get ID failed once, retrying"
+            print("Exception:", e)
+            print("Get ID failed once, retrying")
             self.dyn.flush_input()
             try:
                 self.read_address(3)
@@ -280,9 +227,9 @@ class Robotis_Servo():
         rpm = angvel / (2 * math.pi) * 60.0
         angvel_enc = int(round( rpm / 0.111 ))
         if angvel_enc<0:
-            hi,lo = abs(angvel_enc) / 256 + 4, abs(angvel_enc) % 256
+            hi,lo = abs(angvel_enc) // 256 + 4, abs(angvel_enc) % 256
         else:
-            hi,lo = angvel_enc / 256, angvel_enc % 256
+            hi,lo = angvel_enc // 256, angvel_enc % 256
         
         return self.write_address( 0x20, [lo,hi] )
 
@@ -299,7 +246,7 @@ class Robotis_Servo():
             word = word - 65536
         while word < 0:
             word = word + 65536
-        hi,lo = word / 256, word % 256
+        hi,lo = word // 256, word % 256
         return self.write_address( addr, [lo,hi] )        
         
     def write_wordX(self, addr, word):
@@ -307,13 +254,18 @@ class Robotis_Servo():
             word = word - 65536
         while word < 0:
             word = word + 65536
-        hi,lo = word / 256, word % 256
+        hi,lo = word // 256, word % 256
         return self.write_addressX( addr, [lo,hi] )        
         
     def __calc_checksum_str(self, msg):
         cs = 0
-        for c in msg:
-            cs += ord(c)
+        if sys.version_info.major == 2:
+            for c in msg:
+                cs += ord(c)
+        else:
+            for c in msg:
+                cs += c
+
         return ( ~cs ) & 0xFF
 
     def __calc_checksum(self, msg):
@@ -349,13 +301,13 @@ class Robotis_Servo():
     def ensure_byte_set(self, address, byte):
         value = self.read_address(address)[0]
         if value != byte:
-            print 'Servo [%d]: change setting %d from %d to %d'%(self.servo_id, address, value, byte)
+            print('Servo [%d]: change setting %d from %d to %d'%(self.servo_id, address, value, byte))
             self.write_address(address, [byte])
         
     def ensure_word_set(self, address, word):
         value = self.read_word(address)
         if value != word:
-            print 'Servo [%d]: change setting %d from %d to %d (word)'%(self.servo_id, address, value, word)
+            print('Servo [%d]: change setting %d from %d to %d (word)'%(self.servo_id, address, value, word))
             self.write_word(address, word)
     
     def send_instruction(self, instruction, exceptionOnErrorResponse = True):
@@ -365,8 +317,7 @@ class Robotis_Servo():
         chksum = self.__calc_checksum( msg )
         msg = [ 0xff, 0xff ] + msg + [chksum]
         
-        self.dyn.acq_mutex()
-        try:
+        with self.dyn.lock:
             failures = 0
             while True:
                 try:
@@ -380,11 +331,7 @@ class Robotis_Servo():
                     failures += 1
                     if failures > self.retry_count:
                         raise
-                    warning("send_instruction retry %d, error: %s"%(failures, e.message))
-        except:
-            self.dyn.rel_mutex()
-            raise
-        self.dyn.rel_mutex()
+                    warning("send_instruction retry %d, error: %s"%(failures, e))
         
         if exceptionOnErrorResponse:
             if err != 0:
@@ -410,18 +357,13 @@ class Robotis_Servo():
 
     def receive_reply(self):
         start_bytes_received = 0
-        #skipped_bytes = []
         while (start_bytes_received < 2):
             one = self.dyn.read_serial( 1 )
-            #print ord(one[0])
-            if one == '\xff':
+            if ord(one) == 0xff:
                 start_bytes_received += 1
             else:
-                #skipped_bytes += one
                 start_bytes_received = 0
 
-        #if len(skipped_bytes) > 0:
-        #    print 'Skipped bytes:', skipped_bytes
         servo_id = self.dyn.read_serial( 1 )
         if ord(servo_id) != self.servo_id:
             raise CommunicationError('lib_robotis: Incorrect servo ID received: %d, expected %d' % (ord(servo_id), self.servo_id))
@@ -432,44 +374,51 @@ class Robotis_Servo():
         chksum_calc = self.__calc_checksum_str(servo_id + data_len + err + data)
         if chksum_calc != chksum_in:
             raise CommunicationError('Checksum mismatch: calculated %02X, received %02X'%(chksum_calc, chksum_in))
-        return [ord(v) for v in data], ord(err)
-        
+
+        if sys.version_info.major == 2:
+            return [ord(v) for v in data], ord(err)
+        else:
+            return list(data), ord(err)
 
     def send_serial(self, msg):
         """ sends the command to the servo
         """
-        out = ''
-        for m in msg:
-            out += chr(m)
+        if sys.version_info.major == 2:
+            out = ''
+            for m in msg:
+                out += chr(m)
+        else:
+            out = bytes(msg)
+
         self.dyn.send_serial( out )
 
     def check_overload_and_recover(self):
         _, e = self.read_wordX(34)
         if e & 32 != 0:
-            print "Servo %d: status code %d, will try to recover"%(self.servo_id, e)
+            print("Servo %d: status code %d, will try to recover"%(self.servo_id, e))
             self.write_wordX(71, 0)             # reset goal torque
             self.write_addressX(70, [0])        # torque control off
             self.write_wordX(34, 500)           # restore torque limit
             _, e = self.read_wordX(34) # check stats
             if e & 32 == 0:
-                print "Servo %d: recovery done, status code %d"%(self.servo_id, e)
+                print("Servo %d: recovery done, status code %d"%(self.servo_id, e))
             else:
-                print "Servo %d: recovery failed, status code %d"%(self.servo_id, e)
+                print("Servo %d: recovery failed, status code %d"%(self.servo_id, e))
 
 def find_servos(dyn, max_id=252, print_progress=False):
     ''' Finds all servo IDs on the USB2Dynamixel '''
     servos = []
-    prev_timeout = dyn.servo_dev.getTimeout()
-    dyn.servo_dev.setTimeout( 0.03 ) # To make the scan faster
-    for i in xrange(max_id+1): # 0..max_id
+    prev_timeout = dyn.servo_dev.timeout
+    dyn.servo_dev.timeout = 0.03 # To make the scan faster
+    for i in range(max_id+1): # 0..max_id
         try:
             _ = Robotis_Servo( dyn, i, retry_count=0 )
             if print_progress:
-                print ' FOUND A SERVO @ ID %d' % i
+                print(' FOUND A SERVO @ ID %d' % i)
             servos.append( i )
         except:
             pass
-    dyn.servo_dev.setTimeout( prev_timeout )
+    dyn.servo_dev.timeout = prev_timeout
     return servos
 
 def find_servos_on_all_ports(max_id=252, baudrate=57600, print_progress=False):
@@ -479,7 +428,7 @@ def find_servos_on_all_ports(max_id=252, baudrate=57600, print_progress=False):
         device_name = port[0]
         if 'ttyUSB' in device_name or 'ttyACM' in device_name or 'COM' in device_name:
             if print_progress:
-                print "device:", device_name
+                print("device:", device_name)
             try:
                 connection = create_connection(device_name, 57600)
                 servo_ids = find_servos(connection, max_id=max_id, print_progress=print_progress)
@@ -494,30 +443,30 @@ def recover_servo(dyn):
     raw_input('Make sure only one servo connected to USB2Dynamixel Device [ENTER]')
     raw_input('Disconnect power from the servo, but leave USB2Dynamixel connected to USB. [ENTER]')
 
-    dyn.servo_dev.setBaudrate( 57600 )
+    dyn.servo_dev.baudrate = 57600
     
-    print 'Get Ready.  Be ready to reconnect servo power when I say \'GO!\''
-    print 'After a second, the red LED should become permanently lit.'
-    print 'After that happens, Ctrl + C to kill this program.'
-    print
-    print 'Then, you will need to use a serial terminal to issue additional commands.',
-    print 'Here is an example using screen as serial terminal:'
-    print
-    print 'Command Line:  screen /dev/robot/servo_left 57600'
-    print 'Type: \'h\''
-    print 'Response: Command : L(oad),G(o),S(ystem),A(pplication),R(eset),D(ump),C(lear)'
-    print 'Type: \'C\''
-    print 'Response:  * Clear EEPROM '
-    print 'Type: \'A\''
-    print 'Response: * Application Mode'
-    print 'Type: \'G\''
-    print 'Response:  * Go'
-    print
-    print 'Should now be able to reconnect to the servo using ID 1'
-    print
-    print
+    print('Get Ready.  Be ready to reconnect servo power when I say \'GO!\'')
+    print('After a second, the red LED should become permanently lit.')
+    print('After that happens, Ctrl + C to kill this program.')
+    print()
+    print('Then, you will need to use a serial terminal to issue additional commands.', end=' ')
+    print('Here is an example using screen as serial terminal:')
+    print()
+    print('Command Line:  screen /dev/robot/servo_left 57600')
+    print('Type: \'h\'')
+    print('Response: Command : L(oad),G(o),S(ystem),A(pplication),R(eset),D(ump),C(lear)')
+    print('Type: \'C\'')
+    print('Response:  * Clear EEPROM ')
+    print('Type: \'A\'')
+    print('Response: * Application Mode')
+    print('Type: \'G\'')
+    print('Response:  * Go')
+    print()
+    print('Should now be able to reconnect to the servo using ID 1')
+    print()
+    print()
     raw_input('Ready to reconnect power? [ENTER]')
-    print 'GO!'
+    print('GO!')
 
     while True:
         dyn.servo_dev.write('#')
@@ -530,12 +479,10 @@ if __name__ == '__main__':
                  help='Required: Device string for USB2Dynamixel. [i.e. /dev/ttyUSB0 for Linux, \'0\' (for COM1) on Windows]')
     p.add_option('--scan', action='store_true', dest='scan', default=False,
                  help='Scan the device for servo IDs attached.')
+    p.add_option('--scan-ports', action='store_true', dest='scan_ports', default=False,
+                 help='Scan all serial ports for servo IDs attached.')
     p.add_option('--recover', action='store_true', dest='recover', default=False,
                  help='Recover from a bricked servo (restores to factory defaults).')
-    p.add_option('--ang', action='store', type='float', dest='ang',
-                 help='Angle to move the servo to (degrees).')
-    p.add_option('--ang_vel', action='store', type='float', dest='ang_vel',
-                 help='angular velocity. (degrees/sec) [default = 50]', default=50)
     p.add_option('--id', action='store', type='int', dest='id',
                  help='id of servo to connect to, [default = 1]', default=1)
     p.add_option('--baud', action='store', type='int', dest='baud',
@@ -543,20 +490,20 @@ if __name__ == '__main__':
 
     opt, args = p.parse_args()
 
+    if opt.scan_ports:
+        print('Scanning for Servos...')
+        find_servos_on_all_ports(max_id=252, baudrate=57600, print_progress=True)
+        sys.exit(0)
+
     if opt.dev_name == None:
         p.print_help()
-        sys.exit(0)
+        sys.exit(1)
 
     dyn = USB2Dynamixel_Device(opt.dev_name, opt.baud)
 
     if opt.scan:
-        print 'Scanning for Servos...'
+        print('Scanning for Servos...')
         find_servos( dyn, print_progress=True )
 
     if opt.recover:
         recover_servo( dyn )
-
-    if opt.ang != None:
-        servo = Robotis_Servo( dyn, opt.id )
-        servo.move_angle( math.radians(opt.ang), math.radians(opt.ang_vel) )
-    
