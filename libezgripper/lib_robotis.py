@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # Copyright (c) 2009, Georgia Tech Research Corporation
 # Copyright (c) 2015, SAKE Robotics

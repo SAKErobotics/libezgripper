@@ -6,35 +6,21 @@ A Python library that serves as a driver to the [EZGripper module](https://saker
 
 * On Ubuntu, install all the required dependencies. The library supports both Python 2 and Python 3:
 
-  For Python 2
+      sudo apt-get install python3-serial python3-pyqt5
 
-      sudo apt-get install python-serial python-qt4
-
-  For Python 3
-
-      sudo apt-get install python3-serial python3-pyqt4
 
 * Install the library:
-  
-  For Python 2
 
-      sudo pip install git+https://github.com/SAKErobotics/libezgripper.git@master
-  
-  For Python 3
       
-      sudo pip3 install git+https://github.com/SAKErobotics/libezgripper.git@master
+      sudo pip3 install git+https://github.com/SAKErobotics/libezgripper.git@ubuntu-20.04
 
 ## Quickstart
 
 * Install the ezgripperGUI.py to your desired working directory:
 
-      wget https://raw.githubusercontent.com/SAKErobotics/libezgripper/master/ezgripperGUI.py
+      wget https://raw.githubusercontent.com/SAKErobotics/libezgripper/ubuntu-20.04/ezgripperGUI.py
 
-* Launch the EZGripper GUI in python2 or python3, this should open a push-button GUI using the two base commands - calibrate and goto_position.:
-
-      python ezgripperGUI.py
-  
-  or
+* Launch the EZGripper GUI, this should open a push-button GUI using the two base commands - calibrate and goto_position.:
 
       python3 ezgripperGUI.py
 
@@ -100,7 +86,7 @@ finding the port easier you can use `hwgrep://` URLs::
 
 * To see the properties of your serial ports the library can find try this::
 
-      python -c "import serial.tools.list_ports;print serial.tools.list_ports.comports()"
+      python3 -c "import serial.tools.list_ports;print serial.tools.list_ports.comports()"
 
 * For network connected serial devices you can use the `socket://` URL::
 
