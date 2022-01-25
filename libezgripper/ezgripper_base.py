@@ -31,7 +31,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ##
 
-from lib_robotis import create_connection, Robotis_Servo
+from .lib_robotis import create_connection, Robotis_Servo
 import time
 
 
