@@ -1,6 +1,6 @@
 # libezgripper
 
-A Python library that serves as a driver to the [EZGripper module](https://sakerobotics.com/) designed by SAKE Robotics.
+A Python library that serves as a driver to the [EZGripper module](https://sakerobotics.com/) designed by SAKE Robotics. **This branch is compatible with Ubuntu 16.04 and Ubuntu 18.04** .
 
 ## Tutorial
 
