@@ -135,10 +135,12 @@ class Gripper:
     def get_position(self, servo_num=0, use_percentages = True):
         servo_position = self.servos[servo_num].read_word_signed(36) - self.zero_positions[servo_num]
 
-        if not use_percentages:
-            servo_position = self.OPEN_DUAL_GEN2_POS * ((100.0 - servo_position) / 100.0)
+        current_position = self.down_scale(servo_position, self.GRIP_MAX)
 
-        return self.down_scale(servo_position, self.GRIP_MAX)
+        if not use_percentages:
+            current_position = self.OPEN_DUAL_GEN2_POS * ((100.0 - current_position) / 100.0)
+
+        return current_position
 
     def get_positions(self):
         positions = []
