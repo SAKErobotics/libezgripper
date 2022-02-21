@@ -61,7 +61,7 @@ class Gripper:
     TORQUE_MAX = 800 # maximum torque - MX-64=500, MX-106=350
     TORQUE_HOLD = 13 # This is percentage of TORQUE_MAX. In absolute units: holding torque - MX-64=100, MX-106=80
 
-    OPEN_DUAL_GEN2_POS = 1.92
+    OPEN_DUAL_GEN2_POS = 1.94
     CLOSE_DUAL_GEN2_POS = 0.0
     MAX_DUAL_GEN2_EFFORT = 1.0
 
