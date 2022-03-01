@@ -54,6 +54,8 @@ def wait_for_stop(servo):
         if time.time() - wait_start > 5:
             break
 
+def remap(x, in_min, in_max, out_min, out_max):
+    return int((x-in_min) * (out_max-out_min) / (in_max-in_min) + out_min)
 
 class Gripper:
 
@@ -61,10 +63,17 @@ class Gripper:
     TORQUE_MAX = 800 # maximum torque - MX-64=500, MX-106=350
     TORQUE_HOLD = 13 # This is percentage of TORQUE_MAX. In absolute units: holding torque - MX-64=100, MX-106=80
 
+    OPEN_DUAL_GEN1_POS = 1.5707
+    CLOSE_DUAL_GEN1_POS = -0.27
+
     OPEN_DUAL_GEN2_POS = 1.94
     CLOSE_DUAL_GEN2_POS = 0.0
-    MAX_DUAL_GEN2_EFFORT = 1.0
 
+    OPEN_QUAD_POS = 1.5707
+    CLOSE_QUAD_POS = -0.27
+
+    MIN_SIMULATED_EFFORT = 1.0
+    MAX_SIMULATED_EFFORT = 0.0
 
     def __init__(self, connection, name, servo_ids):
         self.name = name
@@ -132,13 +141,25 @@ class Gripper:
             set_torque_mode(servo, True)
         wait_for_stop(self.servos[0])
 
-    def get_position(self, servo_num=0, use_percentages = True):
-        servo_position = self.servos[servo_num].read_word_signed(36) - self.zero_positions[servo_num]
+    def get_position(self, servo_num=0, \
+            use_percentages = True, gripper_module = 'dual_gen1'):
 
+        servo_position = self.servos[servo_num].read_word_signed(36) - self.zero_positions[servo_num]
         current_position = self.down_scale(servo_position, self.GRIP_MAX)
 
         if not use_percentages:
-            current_position = self.OPEN_DUAL_GEN2_POS * ((100.0 - current_position) / 100.0)
+
+            if gripper_module == 'dual_gen1':
+                current_position = remap(current_position, \
+                    100.0, 0.0, self.OPEN_DUAL_GEN1_POS, self.CLOSE_DUAL_GEN1_POS)
+
+            elif gripper_module == 'dual_gen2':
+                current_position = remap(current_position, \
+                    100.0, 0.0, self.OPEN_DUAL_GEN2_POS, self.CLOSE_DUAL_GEN2_POS)
+
+            elif gripper_module == 'quad':
+                current_position = remap(current_position, \
+                    100.0, 0.0, self.OPEN_QUAD_POS, self.CLOSE_QUAD_POS)
 
         return current_position
 
@@ -148,14 +169,28 @@ class Gripper:
             positions.append(self.get_position(i))
         return positions
 
-    def goto_position(self, position, closing_torque, use_percentages = True):
+    def goto_position(self, position, closing_torque, \
+            use_percentages = True, gripper_module = 'dual_gen1'):
         # Using the 0-100% range allows the user to define the definition of where the gap is measured.
         # position: 0..100, 0 - close, 100 - open
         # closing_torque: 0..100
 
         if not use_percentages:
-            position = 100.0 - (100.0 / self.OPEN_DUAL_GEN2_POS) * position
-            closing_torque *= 100.0 / self.MAX_DUAL_GEN2_EFFORT
+
+            closing_torque = remap(closing_torque, \
+                self.MIN_SIMULATED_EFFORT, self.MAX_SIMULATED_EFFORT, 0, 100)
+
+            if gripper_module =='dual_gen1':
+                position = remap(position, \
+                    self.OPEN_DUAL_GEN1_POS, self.CLOSE_DUAL_GEN1_POS, 100, 0)
+
+            elif gripper_module == 'dual_gen2':
+                position = remap(position, \
+                    self.OPEN_DUAL_GEN2_POS, self.CLOSE_DUAL_GEN2_POS, 100, 0)
+
+            elif gripper_module == 'quad':
+                position = remap(position, \
+                    self.OPEN_QUAD_POS, self.CLOSE_QUAD_POS, 100, 0)
 
         servo_position = self.scale(position, self.GRIP_MAX)
         print("goto_position(%d, %d): servo position %d"%(position, closing_torque, servo_position))
