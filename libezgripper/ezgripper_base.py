@@ -73,8 +73,8 @@ class Gripper:
     OPEN_QUAD_POS = 1.5707
     CLOSE_QUAD_POS = -0.27
 
-    MIN_SIMULATED_EFFORT = 1.0
-    MAX_SIMULATED_EFFORT = 0.0
+    MIN_SIMULATED_EFFORT = 0.0
+    MAX_SIMULATED_EFFORT = 1.0
 
     def __init__(self, connection, name, servo_ids):
         self.name = name
