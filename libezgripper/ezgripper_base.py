@@ -1,11 +1,11 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 #####################################################################
 # Software License Agreement (BSD License)
 #
 # Copyright (c) 2016, SAKE Robotics
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
@@ -31,7 +31,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 ##
 
-from lib_robotis import create_connection, Robotis_Servo
+from .lib_robotis import create_connection, Robotis_Servo
 import time
 
 
@@ -50,58 +50,63 @@ def wait_for_stop(servo):
             break
         last_position = current_position
         time.sleep(0.1)
-        
+
         if time.time() - wait_start > 5:
             break
 
 
 class Gripper:
-    
+
     GRIP_MAX = 2500 # maximum open position for grippers
     TORQUE_MAX = 800 # maximum torque - MX-64=500, MX-106=350
     TORQUE_HOLD = 13 # This is percentage of TORQUE_MAX. In absolute units: holding torque - MX-64=100, MX-106=80
-   
+
+    OPEN_DUAL_GEN2_POS = 1.94
+    CLOSE_DUAL_GEN2_POS = 0.0
+    MAX_DUAL_GEN2_EFFORT = 1.0
+
+
     def __init__(self, connection, name, servo_ids):
         self.name = name
         self.servos = [Robotis_Servo( connection, servo_id ) for servo_id in servo_ids]
         for servo in self.servos:
             servo.ensure_byte_set(22, 1) # Make sure 'Resolution divider' is set to 1
         self.zero_positions = [0] * len(self.servos)
-    
+
     def scale(self, n, to_max):
         # Scale from 0..100 to 0..to_max
         result = int(n * to_max / 100)
         if result > to_max: result = to_max
         if result < 0: result = 0
         return result
-    
+
     def down_scale (self, n, to_max):
         # Scale from 0..to_max to 0..100
         result = int(round(n * 100.0 / to_max))
         if result > 100: result = 100
         if result < 0: result = 0
         return result
-        
+
     def calibrate(self):
         print("calibrating: " + self.name)
-        
+
         for servo in self.servos:
             servo.write_address(6, [255,15,255,15] )   # 1) "Multi-Turn" - ON
             servo.write_word(34, 500)                  # 2) "Torque Limit" to 500 (or so)
             servo.write_address(24, [0])               # 3) "Torque Enable" to OFF
             servo.write_address(70, [1])               # 4) Set "Goal Torque Mode" to ON
             servo.write_word(71, 1024 + 100)           # 5) Set "Goal Torque" Direction to CW and Value 100
-        
+
         time.sleep(4.0)                               # 6) give it time to stop
-        
+
         for i in range(len(self.servos)):
             servo = self.servos[i]
             servo.write_word(71, 1024 + 10)            # 7) Set "Goal Torque" Direction to CW and Value 10 - reduce load on servo
-            servo.write_word(20, 0)                    # 8) set "Multi turn offset" to 0   
+            servo.write_word(20, 0)                    # 8) set "Multi turn offset" to 0
             self.zero_positions[i] = servo.read_word_signed(36) # 9) read current position of servo
-        
+
         print("calibration done")
-    
+
     def set_max_effort(self, max_effort):
         # sets torque for moving to position (moving_torque) and for torque only mode (torque_mode_max_effort)
         # range 0-100% (0-100) - this range is in 0-100 whole numbers so that it can be used where Newton force is expected
@@ -121,15 +126,21 @@ class Gripper:
         for i in range(len(self.servos)):
             self.servos[i].write_word(30, self.zero_positions[i] + position)
         wait_for_stop(self.servos[0])
-        
+
     def _close_with_torque(self):
         for servo in self.servos:
             set_torque_mode(servo, True)
         wait_for_stop(self.servos[0])
 
-    def get_position(self, servo_num=0):
+    def get_position(self, servo_num=0, use_percentages = True):
         servo_position = self.servos[servo_num].read_word_signed(36) - self.zero_positions[servo_num]
-        return self.down_scale(servo_position, self.GRIP_MAX)
+
+        current_position = self.down_scale(servo_position, self.GRIP_MAX)
+
+        if not use_percentages:
+            current_position = self.OPEN_DUAL_GEN2_POS * ((100.0 - current_position) / 100.0)
+
+        return current_position
 
     def get_positions(self):
         positions = []
@@ -137,11 +148,15 @@ class Gripper:
             positions.append(self.get_position(i))
         return positions
 
-    def goto_position(self, position, closing_torque):
+    def goto_position(self, position, closing_torque, use_percentages = True):
         # Using the 0-100% range allows the user to define the definition of where the gap is measured.
         # position: 0..100, 0 - close, 100 - open
         # closing_torque: 0..100
-        
+
+        if not use_percentages:
+            position = 100.0 - (100.0 / self.OPEN_DUAL_GEN2_POS) * position
+            closing_torque *= 100.0 / self.MAX_DUAL_GEN2_EFFORT
+
         servo_position = self.scale(position, self.GRIP_MAX)
         print("goto_position(%d, %d): servo position %d"%(position, closing_torque, servo_position))
         self.set_max_effort(closing_torque)  # essentially sets velocity of movement, but also sets max_effort for initial half second of grasp.
@@ -150,7 +165,7 @@ class Gripper:
             self._close_with_torque()
         else:
             self._goto_position(servo_position)
-        
+
         # Sets torque to keep gripper in position, but does not apply torque if there is no load.
         # This does not provide continuous grasping torque.
         holding_torque = min(self.TORQUE_HOLD, closing_torque)
@@ -160,7 +175,7 @@ class Gripper:
     def release(self):
         for servo in self.servos:
             set_torque_mode(servo, False)
-            
+
     def open(self):
         self.goto_position(100, 100)
 
