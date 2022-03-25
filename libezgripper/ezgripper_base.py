@@ -55,8 +55,8 @@ def wait_for_stop(servo):
             break
 
 def remap(x, in_min, in_max, out_min, out_max):
-    return (x-in_min) * (out_max-out_min) / \
-        (in_max-in_min) + out_min
+    return (x - in_min) * (out_max - out_min) / \
+            (in_max - in_min) + out_min
 
 class Gripper:
 
@@ -69,6 +69,12 @@ class Gripper:
 
     OPEN_DUAL_GEN2_POS = 0.0
     CLOSE_DUAL_GEN2_POS = 1.94
+
+    OPEN_DUAL_GEN2_SINGLE_MOUNT_POS = -1.5707
+    CLOSE_DUAL_GEN2_SINGLE_MOUNT_POS = 0.27
+
+    OPEN_DUAL_GEN2_TRIPLE_MOUNT_POS = -1.5707
+    CLOSE_DUAL_GEN2_TRIPLE_MOUNT_POS = 0.27
 
     OPEN_QUAD_POS = 1.5707
     CLOSE_QUAD_POS = -0.27
@@ -158,6 +164,14 @@ class Gripper:
                 current_position = remap(current_position, \
                     100.0, 0.0, self.OPEN_DUAL_GEN2_POS, self.CLOSE_DUAL_GEN2_POS)
 
+            elif gripper_module == 'dual_gen2_single_mount':
+                current_position = remap(current_position, \
+                    100.0, 0.0, self.OPEN_DUAL_GEN2_SINGLE_MOUNT_POS, self.CLOSE_DUAL_GEN2_SINGLE_MOUNT_POS)
+
+            elif gripper_module == 'dual_gen2_triple_mount':
+                current_position = remap(current_position, \
+                    100.0, 0.0, self.OPEN_DUAL_GEN2_TRIPLE_MOUNT_POS, self.CLOSE_DUAL_GEN2_TRIPLE_MOUNT_POS)
+
             elif gripper_module == 'quad':
                 current_position = remap(current_position, \
                     100.0, 0.0, self.OPEN_QUAD_POS, self.CLOSE_QUAD_POS)
@@ -181,13 +195,21 @@ class Gripper:
             closing_torque = remap(closing_torque, \
                 self.MIN_SIMULATED_EFFORT, self.MAX_SIMULATED_EFFORT, 0, 100)
 
-            if gripper_module =='dual_gen1':
+            if gripper_module == 'dual_gen1':
                 position = remap(position, \
                     self.OPEN_DUAL_GEN1_POS, self.CLOSE_DUAL_GEN1_POS, 100, 0)
 
             elif gripper_module == 'dual_gen2':
                 position = remap(position, \
                     self.OPEN_DUAL_GEN2_POS, self.CLOSE_DUAL_GEN2_POS, 100, 0)
+
+            elif gripper_module == 'dual_gen2_single_mount':
+                position = remap(position, \
+                    self.OPEN_DUAL_GEN2_SINGLE_MOUNT_POS, self.CLOSE_DUAL_GEN2_SINGLE_MOUNT_POS, 100, 0)
+
+            elif gripper_module == 'dual_gen2_triple_mount':
+                position = remap(position, \
+                    self.OPEN_DUAL_GEN2_TRIPLE_MOUNT_POS, self.CLOSE_DUAL_GEN2_TRIPLE_MOUNT_POS, 100, 0)
 
             elif gripper_module == 'quad':
                 position = remap(position, \
