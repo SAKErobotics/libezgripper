@@ -138,7 +138,7 @@ class Gripper:
         wait_for_stop(self.servos[0])
 
     def get_position(self, servo_num=0, \
-            use_percentages = True, gripper_module = 'dual_gen1'):
+            use_percentages = True):
 
         servo_position = self.servos[servo_num].read_word_signed(36) - self.zero_positions[servo_num]
         current_position = self.down_scale(servo_position, self.GRIP_MAX)
@@ -155,7 +155,7 @@ class Gripper:
         return positions
 
     def goto_position(self, position, closing_torque, \
-            use_percentages = True, gripper_module = 'dual_gen1'):
+            use_percentages = True):
         # Using the 0-100% range allows the user to define the definition of where the gap is measured.
         # position: 0..100, 0 - close, 100 - open
         # closing_torque: 0..100
