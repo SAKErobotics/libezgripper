@@ -64,20 +64,9 @@ class Gripper:
     TORQUE_MAX = 800 # maximum torque - MX-64=500, MX-106=350
     TORQUE_HOLD = 13 # This is percentage of TORQUE_MAX. In absolute units: holding torque - MX-64=100, MX-106=80
 
-    OPEN_DUAL_GEN1_POS = 1.5707
-    CLOSE_DUAL_GEN1_POS = -0.27
 
-    OPEN_DUAL_GEN2_POS = 0.0
-    CLOSE_DUAL_GEN2_POS = 1.94
-
-    OPEN_DUAL_GEN2_SINGLE_MOUNT_POS = -1.5707
-    CLOSE_DUAL_GEN2_SINGLE_MOUNT_POS = 0.27
-
-    OPEN_DUAL_GEN2_TRIPLE_MOUNT_POS = -1.5707
-    CLOSE_DUAL_GEN2_TRIPLE_MOUNT_POS = 0.27
-
-    OPEN_QUAD_POS = 1.5707
-    CLOSE_QUAD_POS = -0.27
+    OPEN_POS = -1.5707
+    CLOSE_POS = 0.27
 
     MIN_SIMULATED_EFFORT = 0.0
     MAX_SIMULATED_EFFORT = 1.0
@@ -149,32 +138,13 @@ class Gripper:
         wait_for_stop(self.servos[0])
 
     def get_position(self, servo_num=0, \
-            use_percentages = True, gripper_module = 'dual_gen1'):
+            use_percentages = True):
 
         servo_position = self.servos[servo_num].read_word_signed(36) - self.zero_positions[servo_num]
         current_position = self.down_scale(servo_position, self.GRIP_MAX)
 
         if not use_percentages:
-
-            if gripper_module == 'dual_gen1':
-                current_position = remap(current_position, \
-                    100.0, 0.0, self.OPEN_DUAL_GEN1_POS, self.CLOSE_DUAL_GEN1_POS)
-
-            elif gripper_module == 'dual_gen2':
-                current_position = remap(current_position, \
-                    100.0, 0.0, self.OPEN_DUAL_GEN2_POS, self.CLOSE_DUAL_GEN2_POS)
-
-            elif gripper_module == 'dual_gen2_single_mount':
-                current_position = remap(current_position, \
-                    100.0, 0.0, self.OPEN_DUAL_GEN2_SINGLE_MOUNT_POS, self.CLOSE_DUAL_GEN2_SINGLE_MOUNT_POS)
-
-            elif gripper_module == 'dual_gen2_triple_mount':
-                current_position = remap(current_position, \
-                    100.0, 0.0, self.OPEN_DUAL_GEN2_TRIPLE_MOUNT_POS, self.CLOSE_DUAL_GEN2_TRIPLE_MOUNT_POS)
-
-            elif gripper_module == 'quad':
-                current_position = remap(current_position, \
-                    100.0, 0.0, self.OPEN_QUAD_POS, self.CLOSE_QUAD_POS)
+            current_position = remap(current_position, 100.0, 0.0, self.OPEN_POS, self.CLOSE_POS)
 
         return current_position
 
@@ -185,7 +155,7 @@ class Gripper:
         return positions
 
     def goto_position(self, position, closing_torque, \
-            use_percentages = True, gripper_module = 'dual_gen1'):
+            use_percentages = True):
         # Using the 0-100% range allows the user to define the definition of where the gap is measured.
         # position: 0..100, 0 - close, 100 - open
         # closing_torque: 0..100
@@ -195,25 +165,7 @@ class Gripper:
             closing_torque = remap(closing_torque, \
                 self.MIN_SIMULATED_EFFORT, self.MAX_SIMULATED_EFFORT, 0, 100)
 
-            if gripper_module == 'dual_gen1':
-                position = remap(position, \
-                    self.OPEN_DUAL_GEN1_POS, self.CLOSE_DUAL_GEN1_POS, 100, 0)
-
-            elif gripper_module == 'dual_gen2':
-                position = remap(position, \
-                    self.OPEN_DUAL_GEN2_POS, self.CLOSE_DUAL_GEN2_POS, 100, 0)
-
-            elif gripper_module == 'dual_gen2_single_mount':
-                position = remap(position, \
-                    self.OPEN_DUAL_GEN2_SINGLE_MOUNT_POS, self.CLOSE_DUAL_GEN2_SINGLE_MOUNT_POS, 100, 0)
-
-            elif gripper_module == 'dual_gen2_triple_mount':
-                position = remap(position, \
-                    self.OPEN_DUAL_GEN2_TRIPLE_MOUNT_POS, self.CLOSE_DUAL_GEN2_TRIPLE_MOUNT_POS, 100, 0)
-
-            elif gripper_module == 'quad':
-                position = remap(position, \
-                    self.OPEN_QUAD_POS, self.CLOSE_QUAD_POS, 100, 0)
+            position = remap(position, self.OPEN_POS, self.CLOSE_POS, 100, 0)
 
         servo_position = self.scale(position, self.GRIP_MAX)
         print("goto_position(%d, %d): servo position %d"%(position, closing_torque, servo_position))
